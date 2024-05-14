@@ -48,6 +48,3 @@ class LoggerFactory:
 
 
 log = LoggerFactory.get_logger(name="api_logger")
-
-log.info("big")
-log.warning("zalupa")
