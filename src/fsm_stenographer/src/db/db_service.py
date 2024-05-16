@@ -3,8 +3,8 @@ from dotenv import load_dotenv, find_dotenv
 from psycopg2.pool import ThreadedConnectionPool
 import psycopg2
 
-from src.fsm_stenographer_models import Event
-from src.logger import log
+from fsm_stenographer_models import Event
+from logger import log
 
 _env_file = find_dotenv(f'./.{os.getenv("ENV", "dev")}.env')
 load_dotenv(_env_file)
@@ -66,7 +66,7 @@ class Database():
             self.conn_pool = ThreadedConnectionPool(
                 minconn=1,
                 maxconn=10,
-                username=self.__user,
+                user=self.__user,
                 password=self.__password,
                 host=self.host,
                 port=self.port,

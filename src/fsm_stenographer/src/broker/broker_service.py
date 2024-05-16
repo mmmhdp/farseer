@@ -1,15 +1,15 @@
 import json
 
-from broker_producer_conf import producer_config
-from broker_consumer_conf import consumer_config
-from src.fsm_stenographer_models import Event
-from src.logger import log
+from broker.broker_producer_conf import producer_config
+from broker.broker_consumer_conf import consumer_config
+from fsm_stenographer_models import Event
+from logger import log
 
 from confluent_kafka import Producer, Consumer, KafkaError, KafkaException
 
 
 class Broker:
-    def __init__(self, topics=[]):
+    def __init__(self, topics=["fake_test_topic"]):
         self.producer = self._get_producer()
         self.consumer = self._get_consumer()
         self.topics = topics
@@ -17,12 +17,13 @@ class Broker:
         self.consumer.subscribe(self.topics)
 
     def __del__(self):
-        self.consumer.close()
+        if self.consumer:
+            self.consumer.close()
 
     def _get_producer(self):
         return Producer(**producer_config)
 
-    def _get_comsumer(self):
+    def _get_consumer(self):
         return Consumer(**consumer_config)
 
     def consume_event(self):
@@ -98,6 +99,3 @@ class Broker:
                 f"failed to publish event: {event.event} \
                 with event_uuid: {event.event_uuid} \
                 because of exception: {ex}")
-
-
-msg_broker = Broker()

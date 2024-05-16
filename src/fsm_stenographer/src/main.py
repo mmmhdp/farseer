@@ -1,5 +1,5 @@
 from logger import log
-from fsm_stenographer import fsm_stenographer_service
+from fsm_stenographer_service import fsm_stenographer_service
 
 
 def main():
