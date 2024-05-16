@@ -33,7 +33,7 @@ class LoggerFactory:
 
         if to_stdout:
             console = logging.StreamHandler()
-            console.setLevel(cls.basic_lvl)
+            console.setLevel(loglvl)
             console.setFormatter(cls.basic_formatter)
             new_logger_obj.addHandler(console)
         return new_logger_obj
@@ -47,4 +47,4 @@ class LoggerFactory:
         return path
 
 
-log = LoggerFactory.get_logger(name="api_logger")
+log = LoggerFactory.get_logger(name="api_logger", loglvl=logging.DEBUG)

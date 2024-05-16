@@ -22,7 +22,7 @@ class Broker:
          ")
         try:
             _topic = topic
-            current_state = "init_startup"
+            current_state = state
             self.producer.produce(
                 _topic,
                 key=request.request_uuid,
