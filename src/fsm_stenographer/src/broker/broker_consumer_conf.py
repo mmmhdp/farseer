@@ -7,17 +7,17 @@ load_dotenv(__ENV_FILE)
 
 class ConsumerConfig(object):
     def __init__(self):
-        self.kafka_host = self._get_kafka_host()
-        self.kafka_port = self._get_kafka_port()
+        self.kafka_host = self._get_host()
+        self.kafka_port = self._get_port()
 
-    def _get_kafka_host(self):
+    def _get_host(self):
         try:
             host = os.environ['KAFKA_BROKER_HOST']
         except KeyError:
             host = "localhost"
         return host
 
-    def _get_kafka_port(self):
+    def _get_port(self):
         try:
             port = os.environ['KAFKA_BROKER_PORT']
         except KeyError:
@@ -33,4 +33,5 @@ class ConsumerConfig(object):
         return config
 
 
-consumer_config = ConsumerConfig()
+_config_manager = ConsumerConfig()
+consumer_config = _config_manager.get_config()
