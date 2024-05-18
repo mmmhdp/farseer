@@ -6,18 +6,12 @@ load_dotenv(__ENV_FILE)
 
 
 def _get_api_title():
-    try:
-        api_title = os.environ['API_TITLE']
-    except KeyError:
-        api_title = "APP"
+    api_title = os.environ.get('API_TITLE')
     return api_title
 
 
 def _get_api_version():
-    try:
-        api_version = os.environ['API_VERSION']
-    except KeyError:
-        api_version = "0"
+    api_version = os.environ['API_VERSION']
     return api_version
 
 

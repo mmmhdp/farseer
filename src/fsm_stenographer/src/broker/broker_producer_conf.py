@@ -11,17 +11,11 @@ class ProducerConfig(dict):
         self.port = self._get_broker_port()
 
     def _get_broker_host(self):
-        try:
-            host = os.environ['KAFKA_BROKER_HOST']
-        except KeyError:
-            host = "localhost"
+        host = os.environ['KAFKA_BROKER_HOST']
         return host
 
     def _get_broker_port(self):
-        try:
-            port = os.environ['KAFKA_BROKER_PORT']
-        except KeyError:
-            port = "9092"
+        port = os.environ['KAFKA_BROKER_PORT']
         return port
 
     def get_config(self) -> dict[str:str]:

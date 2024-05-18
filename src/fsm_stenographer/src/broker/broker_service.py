@@ -57,11 +57,7 @@ class Broker:
                 log.error('%% %s [%d] reached end at offset %d\n' %
                           (msg.topic(), msg.partition(), msg.offset()))
             elif msg.error():
-                try:
-                    raise KafkaException(msg.error())
-                except KafkaException(msg.error) as ex:
-                    log.critical(f"kafka broker down with critical \
-                    exception: {ex}")
+                raise KafkaException(msg.error())
 
     def publish_event(self, event: Event, topic: str, state: str) -> None:
 

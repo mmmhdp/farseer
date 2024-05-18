@@ -19,17 +19,11 @@ class Database():
             host=self.host, port=self.port, db=self.db_partition)
 
     def _get_host(self):
-        try:
-            host = os.environ['REDIS_DB_HOST']
-        except KeyError:
-            host = "localhost"
+        host = os.environ['REDIS_DB_HOST']
         return host
 
     def _get_port(self):
-        try:
-            port = os.environ['REDIS_DB_PORT']
-        except KeyError:
-            port = "6379"
+        port = os.environ['REDIS_DB_PORT']
         return port
 
     def query_request_state_by_request_uuid(

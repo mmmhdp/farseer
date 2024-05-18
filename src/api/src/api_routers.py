@@ -25,10 +25,7 @@ class FarseerAPI:
             "/post", self._change_request_state, methods=["POST"], tags=self.tags)
 
     def _get_api_version(self):
-        try:
-            api_version = os.environ['API_VERSION']
-        except KeyError:
-            api_version = "0"
+        api_version = os.environ['API_VERSION']
         return api_version
 
     def _get_detection_results(

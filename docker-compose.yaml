@@ -7,15 +7,40 @@ services:
     env_file:
        ./src/api/.prod.env
     depends_on:
+      - fsm-stenographer
       - redis
       - kafka
     profiles: ["api"]
-  
+
+  fsm-stenographer:
+    build: ./src/fsm_stenographer/    
+    image: mmmhdp/farseer_fsm_stenographer:v0
+    ports:
+      - "5555:5555" 
+    env_file:
+       ./src/fsm_stenographer/.prod.env
+    depends_on:
+      - postgres
+      - kafka
+    profiles: ["fsm-st"]
+
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432" 
+    environment:
+      - POSTGRES_PASSWORD=Qq220605
+      - POSTGRES_USER=nikita
+      - POSTGRES_DB=crud_db 
+      - PGDATABASE=crud_db
+    profiles: ["infr"]
 
   redis:
     image: redis
     ports:
       - "6379:6379"
+    profiles: ["infr"]
+    
   
   zookeeper:
     image: confluentinc/cp-zookeeper
@@ -24,6 +49,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - 22181:2181
+    profiles: ["infr"]
   
   kafka:
     image: confluentinc/cp-kafka
@@ -38,3 +64,4 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    profiles: ["infr"]

@@ -11,17 +11,11 @@ class ConsumerConfig(object):
         self.kafka_port = self._get_port()
 
     def _get_host(self):
-        try:
-            host = os.environ['KAFKA_BROKER_HOST']
-        except KeyError:
-            host = "localhost"
+        host = os.environ['KAFKA_BROKER_HOST']
         return host
 
     def _get_port(self):
-        try:
-            port = os.environ['KAFKA_BROKER_PORT']
-        except KeyError:
-            port = "9092"
+        port = os.environ['KAFKA_BROKER_PORT']
         return port
 
     def get_config(self) -> dict[str:str]:

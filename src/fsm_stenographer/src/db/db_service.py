@@ -20,45 +20,30 @@ class Database():
         self.conn_pool = None
         self.is_ready = self.__init_tables()
         if self.is_ready:
-            self.__up_health(1)
+            self.__is_healthy(1)
 
     def __del__(self):
         if self.conn_pool:
             self.conn_pool.closeall()
 
     def _get_host(self):
-        try:
-            host = os.environ['POSTGRES_DB_HOST']
-        except KeyError:
-            host = "localhost"
+        host = os.environ['POSTGRES_DB_HOST']
         return host
 
     def _get_port(self):
-        try:
-            port = os.environ['POSTGRES_DB_PORT']
-        except KeyError:
-            port = "5432"
+        port = os.environ['POSTGRES_DB_PORT']
         return port
 
     def _get_db_user(self):
-        try:
-            user = os.environ['POSTGRES_USER']
-        except KeyError:
-            user = "postgres"
+        user = os.environ['POSTGRES_USER']
         return user
 
     def _get_db_password(self):
-        try:
-            password = os.environ['POSTGRESS_PASSWORD']
-        except KeyError:
-            password = "password"
+        password = os.environ['POSTGRES_PASSWORD']
         return password
 
     def _get_db(self):
-        try:
-            basic_db = os.environ['POSTGRES_DB']
-        except KeyError:
-            basic_db = "postgres"
+        basic_db = os.environ['POSTGRES_DB']
         return basic_db
 
     def __init_tables(self):
@@ -79,39 +64,40 @@ class Database():
                 _curr = _conn.cursor()
                 _curr.execute(
                     f"""
-                    CREATE TABLE request_state (
+                    CREATE TABLE IF NOT EXISTS request_state (
                     request_uuid   VARCHAR (100) PRIMARY KEY,
                     state          VARCHAR (100) NOT NULL,
-                    event,         VARCHAR (100) NOT NULL,
-                    stream_source  VARCHAR (100) NOT NULL,
+                    event         VARCHAR (100) NOT NULL,
+                    stream_source  VARCHAR (100) NOT NULL
                     );
                     """
                 )
                 _curr.execute(
                     f"""
-                    CREATE TABLE events (
+                    CREATE TABLE IF NOT EXISTS events (
                     event_id       SERIAL PRIMARY KEY,
-                    request_uuid   VARCHAR (100) UNIQUE NOT NULL,
+                    request_uuid   VARCHAR (100) NOT NULL,
                     state          VARCHAR (100) NOT NULL,
-                    event,         VARCHAR (100) NOT NULL,
-                    stream_source  VARCHAR (100) NOT NULL,
+                    event         VARCHAR (100) NOT NULL,
+                    stream_source  VARCHAR (100) NOT NULL
                     );
                     """
                 )
                 _conn.commit()
+                self.conn_pool.putconn(_conn)
             else:
                 return False
-            self.conn_pool.putconn(_conn)
             return True
+
         except (Exception, psycopg2.DatabaseError) as ex:
             log.critical(
                 f"Error while connecting to db while init action with exception: {ex}")
         finally:
             return False
 
-    def __up_health(self, val: int):
+    def __is_healthy(self, val: int):
         val = str(val)
-        os.environ["HEALTHY"] = 1
+        os.environ["HEALTHY"] = val
 
     def update_state_table_with_event(self, event: Event):
         try:
@@ -122,22 +108,24 @@ class Database():
                 _curr.execute(
                     f"""
                     INSERT INTO request_state (request_uuid, state, event, stream_source)
-                    VALUES ({event.request_uuid}, {event.state}, {event.event}, {event.stream_source})
+                    VALUES ('{event.request_uuid}', '{event.state}', '{event.event}', '{event.stream_source}')
                     ON CONFLICT (request_uuid)
-                    DO UPDATE SET
-                    state = EXCLUDED.state
-                    event = EXCLUDED.event;
+                    DO UPDATE 
+                    SET
+                    state = EXCLUDED.state,
+                    event = EXCLUDED.event
+                    ;
                     """
                 )
                 _curr.execute(
                     f"""
-                    INSERT INTO events (request_uuid, state, event, stream_source)
-                    VALUES ({event.request_uuid}, {event.state}, {event.event}, {event.stream_source})
-                    ON CONFLICT (request_uuid) DO NOTHING;
+                    INSERT INTO events (event_id, request_uuid, state, event, stream_source)
+                    VALUES (DEFAULT ,'{event.request_uuid}', '{event.state}', '{event.event}', '{event.stream_source}')
                     """
                 )
                 _conn.commit()
             self.conn_pool.putconn(_conn)
+
         except (Exception, psycopg2.DatabaseError) as ex:
             log.critical(
                 f"Error while connecting to db while insert/update action with exception: {ex}")

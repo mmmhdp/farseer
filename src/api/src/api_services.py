@@ -10,6 +10,8 @@ from src.db.db_service import db
 from src.broker.broker_service import msg_broker
 from src.logger import log
 
+REQUEST_UUID_FOR_INVALID_SOURCE_FOR_START_EVENT = "-1"
+
 
 class APIServices:
     def get_request_state_by_request_uuid(
@@ -25,7 +27,12 @@ class APIServices:
         self, request: Annotated[UserRequest, Depends()]
     ) -> RequestState:
 
-        request.request_uuid = str(uuid.uuid4())
+        if request.event == "start" and not request.stream_source:
+            return RequestState(request_uuid=REQUEST_UUID_FOR_INVALID_SOURCE_FOR_START_EVENT)
+
+        if not request.request_uuid:
+            request.request_uuid = str(uuid.uuid4())
+
         log.debug(
             f"inside change state service api with uuid: {request.request_uuid}")
 

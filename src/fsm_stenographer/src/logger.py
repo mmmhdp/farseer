@@ -9,8 +9,9 @@ load_dotenv(_env_file)
 class LoggerFactory:
     suffix = "_logger"
     basic_lvl = logging.INFO
-    basic_formatter = logging.Formatter(
-        '%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s')
+    basic_format = "[%(asctime)s] p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s"
+    basic_datefmt = '%m-%d %H:%M:%S'
+    basic_formatter = logging.Formatter(basic_format, basic_datefmt)
 
     @classmethod
     def get_logger(cls,
@@ -23,8 +24,8 @@ class LoggerFactory:
         logging.basicConfig(
             filename=log_file_path,
             filemode='a',
-            format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-            datefmt='%H:%M:%S',
+            format=cls.basic_format,
+            datefmt=cls.basic_datefmt,
             level=loglvl
         )
 
@@ -40,11 +41,9 @@ class LoggerFactory:
 
     @classmethod
     def __get_log_path(cls, name):
-        try:
-            path = os.environ["LOG_FILE_PATH"]
-        except KeyError:
-            path = f".{name}_log.txt"
+        path = os.environ["LOG_FILE_PATH"]
         return path
 
 
-log = LoggerFactory.get_logger(name="api_logger", loglvl=logging.DEBUG)
+log = LoggerFactory.get_logger(
+    name="fsm_stenographer_logger", loglvl=logging.DEBUG)

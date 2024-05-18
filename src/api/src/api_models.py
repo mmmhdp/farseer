@@ -3,7 +3,10 @@ from typing import Union
 
 
 class UserRequest:
-    def __init__(self, event: str, stream_source: Union[str, None], request_uuid: Union[str, None]):
+    def __init__(self,
+                 event: str,
+                 stream_source: Union[str, None] = None,
+                 request_uuid: Union[str, None] = None):
         self.event = event
         self.stream_source = stream_source
         self.request_uuid = request_uuid
