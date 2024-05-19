@@ -68,6 +68,9 @@ class RunnerService():
                     f"start processing for event: {event.request_uuid} with thread with pid: {event_th}")
                 event_th.start()
 
+            case _:
+                log.warning(f"not implemented event_type: {event_type}")
+
     def _read_stream(self, event: Event) -> None:
         try:
             vid = cv2.VideoCapture(event.stream_source)
@@ -107,26 +110,46 @@ class RunnerService():
             log.critical(f"stop reading stream because of ex: {ex}")
 
     def __publish_event_for_fsm_stenographer_about_invalid_stream_source(self, event: Event):
-        _producer = self.__get_producer()
-        event_for_inference = Event(
-            event="invalid_source",
-            state="",
-            stream_source=event.stream_source,
-            request_uuid=event.request_uuid,
-        )
+        topic = "runner_fsm_st"
+        state = "inactive"
 
-        _producer.publish_event(
-            event=event_for_inference,
-            topic="runner_fsm_st",
-            state="inactive",
-        )
+        log.debug(f"""try to publish event: {event.event}
+        with uuid: {event.request_uuid}
+        topic: {topic}
+        with previous state: {event.state}
+        event: {event.event}
+        stream_source: {event.stream_source}
+         """)
+        try:
+            _producer = self.__get_producer()
+            event_for_inference = Event(
+                event="invalid_source",
+                state="",
+                stream_source=event.stream_source,
+                request_uuid=event.request_uuid,
+            )
+
+            _producer.publish_event(
+                event=event_for_inference,
+                topic=topic,
+                state=state,
+            )
+        except Exception as ex:
+            log.error(
+                f"""failed to publish event: {event.event}
+                with event_uuid: {event.request_uuid}
+                because of exception: {ex}""")
 
     def __get_producer(self):
         return Broker(producer_only=True)
 
-    def __publish_event_for_inference(self, event: Event, frame_id):
+    def __publish_event_for_inference(self, event: Event, frame_id="", clean_up=False):
         topic = "runner_inference"
         state = "active"
+        if clean_up:
+            event.event = "clean_up"
+        else:
+            event.event = "predict"
 
         log.debug(f"""try to publish event: {event.event}
         with uuid: {event.request_uuid}
@@ -139,7 +162,7 @@ class RunnerService():
         try:
             _producer = self.__get_producer()
             event_for_inference = Event(
-                event="predict",
+                event=event.event,
                 state="",
                 stream_source=frame_id,
                 request_uuid=event.request_uuid,
@@ -186,6 +209,8 @@ class RunnerService():
         self.__kill_stream_processes(event)
         self.__clear_cache_db(event)
         self.__clear_image_storage(event)
+
+        self.__publish_event_for_inference(event, clean_up=True)
 
         self.__publish_event_for_fsm_stenographer_about_is_inactive(
             event)

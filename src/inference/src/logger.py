@@ -46,4 +46,4 @@ class LoggerFactory:
 
 
 log = LoggerFactory.get_logger(
-    name="fsm_stenographer_logger", loglvl=logging.DEBUG)
+    name="infrerence_logger", loglvl=logging.DEBUG)

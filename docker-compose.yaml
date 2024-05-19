@@ -73,6 +73,29 @@ services:
           - ./src/runner/.prod.env
     profiles: ["infr"]
   
+  infrerence:
+    build: ./src/inference/ 
+    image: mmmhdp/farseer_inference:v0
+    ports:
+      - "7777:7777" 
+    env_file:
+       ./src/inference/.prod.env
+    depends_on:
+      - kafka
+      - inference-redis
+      - img-minio 
+    profiles: ["inference"]
+  
+  inference-redis:
+    image: redis
+    ports:
+      - "6381:6379"
+    restart: always
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
+    env_file:
+          - ./src/inference/.prod.env
+    profiles: ["infr"]
+  
   img-minio:
     image: minio/minio
     ports:

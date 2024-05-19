@@ -2,7 +2,7 @@ import json
 
 from broker.broker_producer_conf import producer_config
 from broker.broker_consumer_conf import consumer_config
-from runner_models import Event
+from inference_models import Event
 from logger import log
 
 from confluent_kafka import Producer, Consumer, KafkaError, KafkaException

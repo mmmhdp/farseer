@@ -1,4 +1,5 @@
 import os
+import pickle
 import uuid
 import pathlib
 import urllib3
@@ -9,16 +10,16 @@ import numpy.typing as npt
 from dotenv import load_dotenv, find_dotenv
 import redis
 from minio import Minio
-from minio.error import S3Error
+from minio import S3Error
 
-from runner_models import Event
+from inference_models import Event
 from logger import log
 
 _env_file = find_dotenv(f'./.{os.getenv("ENV", "dev")}.env')
 load_dotenv(_env_file)
 
 
-class ProcessCacheDatabase():
+class PredCacheDatabase():
     def __init__(self):
         self.host = self._get_host()
         self.port = self._get_port()
@@ -50,28 +51,13 @@ class ProcessCacheDatabase():
         db_partition = 0
         return db_partition
 
-    def save_pid(self, pid: int, event: Event):
-        self.conn.set(event.request_uuid, pid)
+    def save_pred(self, event: Event, predicitons: list[str]):
+        for pred in predicitons:
+            fine_pred = " " + str(pred)
+            self.conn.append(event.request_uuid, fine_pred)
 
     def is_exists(self, event: Event):
         return self.conn.keys(event.request_uuid)
-
-    def find_all_possible_pids_for_event(self, event) -> list[int]:
-        cursor = '0'
-        prefix = event.request_uuid
-        ns_keys = prefix + '*'
-
-        pids = []
-        while cursor != 0:
-            cursor, keys = self.conn.scan(
-                cursor=cursor, match=ns_keys, count=10_000)
-            if keys:
-                for key in keys:
-                    pid = self.conn.get(key.decode())
-                    pid = int(pid.decode())
-                    pids.append(pid)
-
-        return pids
 
     def clear_after_event(self, event: Event):
         cursor = '0'
@@ -83,7 +69,7 @@ class ProcessCacheDatabase():
                 self.conn.delete(*keys)
 
 
-IMAGE_BUCKET_NAME = "image_bucket"
+IMAGE_BUCKET_NAME = "frames-for-inference"
 
 
 class ImgS3Database():
@@ -100,14 +86,11 @@ class ImgS3Database():
             secure=False
         )
         self.IMAGE_BUCKET_path = pathlib.Path(IMAGE_BUCKET_NAME)
+        self.__init_bucket()
 
     def __init_bucket(self):
-        try:
-            is_exists = self.client.bucket_exists(IMAGE_BUCKET_NAME)
-            if not is_exists:
-                self.client.make_bucket(IMAGE_BUCKET_NAME)
-        except (S3Error, ValueError) as er:
-            log.exception(f"tries to init bucket, but get ex: {er})")
+        if not self.client.bucket_exists(IMAGE_BUCKET_NAME):
+            self.client.make_bucket(IMAGE_BUCKET_NAME)
 
     def _get_endpoint(self):
         url = f"{self.host}:{self.port}/"
@@ -129,53 +112,27 @@ class ImgS3Database():
         password = os.environ['MINIO_ROOT_PASSWORD']
         return password
 
-    def save_frame(self, frame: npt.ArrayLike, event: Event) -> str:
-        b_frame = frame.tobytes()
-        frm_buff = BytesIO(b_frame)
-        bucket_name = IMAGE_BUCKET_NAME
-        content_type = "image/png"
-        frm_obj_name = str(
-            self.IMAGE_BUCKET_path / event.request_uuid / str(uuid.uuid4()))
-
-        result = self.client.put_object(
-            bucket_name=bucket_name,
-            object_name=frm_obj_name,
-            data=frm_buff,
-            content_type=content_type)
-
-        if result:
-            log.info(f"frame with frame_id: {result.object_name} is saved")
-        else:
-            log.info(f"failed to save frame with frame_id: {frm_obj_name}")
-
-        return frm_obj_name
-
     def get_frame_by_frame_id(self, frame_id: str) -> npt.ArrayLike:
         bucket_name = IMAGE_BUCKET_NAME
         frm_obj_name = frame_id
+        frame = None
+        try:
+            response: urllib3.HTTPResponse = self.client.get_object(
+                bucket_name=bucket_name,
+                object_name=frm_obj_name
+            )
 
-        response: urllib3.HTTPResponse = self.client.get_object(
-            bucket_name=bucket_name,
-            object_name=frm_obj_name
-        )
+            raw_shape = response.headers["x-amz-meta-shape"]
+            shape = tuple(map(int, raw_shape.split(",")))
 
-        frame: npt.ArrayLike = np.frombuffer(response.read())
-        if frame is not None:
+            frame: npt.ArrayLike = pickle.loads(response.read()).reshape(shape)
+
             log.info(
                 f"frame with frame_id: {frame_id} is retrived from storage")
-
-        response.close()
-        response.release_conn()
+        except S3Error:
+            log.info(f"image not found in storage: {frame_id}")
+        finally:
+            response.close()
+            response.release_conn()
 
         return frame
-
-    def clear_after_event(self, event: Event):
-        b_name = IMAGE_BUCKET_NAME
-        prefix = event.request_uuid
-
-        for obj in self.client.list_objects(
-                bucket_name=b_name,
-                prefix=prefix,
-                recursive=True):
-            self.client.remove_object(obj.bucket_name, obj.object_name)
-        log.info(f"db is cleared after event {event.request_uuid}")

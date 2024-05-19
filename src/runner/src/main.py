@@ -1,5 +1,6 @@
-from logger import log
 from runner_service import runner_service
+from logger import log
+profiles: ["infr", "minio"]
 
 
 RESTARTN = 10

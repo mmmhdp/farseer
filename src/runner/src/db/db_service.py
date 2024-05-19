@@ -2,6 +2,7 @@ import os
 import uuid
 import pathlib
 import urllib3
+import pickle
 from io import BytesIO
 
 import numpy as np
@@ -127,18 +128,20 @@ class ImgS3Database():
         return password
 
     def save_frame(self, frame: npt.ArrayLike, event: Event) -> str:
-        b_frame = frame.tobytes()
+        b_frame = pickle.dumps(frame)
         frm_buff = BytesIO(b_frame)
         bucket_name = IMAGE_BUCKET_NAME
         content_type = "image/png"
         frm_obj_name = str(
             self.IMAGE_BUCKET_path / event.request_uuid / str(uuid.uuid4()))
+        img_meta = {"shape": frame.shape}
 
         result = self.client.put_object(
             bucket_name=bucket_name,
             object_name=frm_obj_name,
             data=frm_buff,
             length=len(b_frame),
+            metadata=img_meta,
             content_type=content_type)
 
         if result:
