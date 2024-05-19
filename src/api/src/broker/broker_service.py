@@ -13,13 +13,13 @@ class Broker:
 
     def publish_event(self, request, topic, state):
 
-        log.debug(f"try to publish event: {request.event} \
-        with uuid: {request.request_uuid} \
-        topic: {topic} \
-        state: {state} \
-        event: {request.event} \
-        stream_source: {request.stream_source}\
-         ")
+        log.debug(f"""try to publish event: {request.event}
+                  with uuid: {request.request_uuid}
+                  topic: {topic}
+                  state: {state}
+                  event: {request.event}
+                  stream_source: {request.stream_source}
+                  """)
         try:
             _topic = topic
             current_state = state
@@ -38,14 +38,14 @@ class Broker:
 
             self.producer.flush()
             log.info(
-                f"event: {request.event} \
-                with request_uuid: {request.request_uuid} is published")
+                f"""event: {request.event}
+                with request_uuid: {request.request_uuid} is published""")
 
         except Exception as ex:
             log.error(
-                f"failed to publish event: {request.event} \
-                with request_uuid: {request.request_uuid} \
-                because of exception: {ex}")
+                f"""failed to publish event: {request.event} 
+                with request_uuid: {request.request_uuid} 
+                because of exception: {ex}""")
 
 
 msg_broker = Broker()

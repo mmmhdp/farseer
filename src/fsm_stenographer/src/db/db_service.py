@@ -120,11 +120,17 @@ class Database():
                 _curr.execute(
                     f"""
                     INSERT INTO events (event_id, request_uuid, state, event, stream_source)
-                    VALUES (DEFAULT ,'{event.request_uuid}', '{event.state}', '{event.event}', '{event.stream_source}')
+                    VALUES (DEFAULT ,'{event.request_uuid}', '{event.state}', '{event.event}', '{event.stream_source}');
                     """
                 )
                 _conn.commit()
             self.conn_pool.putconn(_conn)
+
+            log.critical(f"""update fsm state with event: {event.event}, 
+            request_uuid: {event.request_uuid},
+            state: {event.state},
+            stream_source: {event.stream_source}
+            """)
 
         except (Exception, psycopg2.DatabaseError) as ex:
             log.critical(

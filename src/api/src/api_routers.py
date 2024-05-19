@@ -52,10 +52,10 @@ class FarseerAPI:
         """
 
         log.debug(
-            f"try change request state for request \
-            with uuid: {request.request_uuid} \
-            event: {request.event}\
-            stream_source: {request.stream_source}")
+            f"""try change request state for request 
+            with uuid: {request.request_uuid} 
+            event: {request.event} 
+            stream_source: {request.stream_source}""")
 
         state: RequestState = api_services.update_request_state(request)
         return state

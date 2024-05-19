@@ -7,10 +7,23 @@ services:
     env_file:
        ./src/api/.prod.env
     depends_on:
-      - fsm-stenographer
-      - redis
       - kafka
+      - api-redis
+      - fsm-stenographer
+      #- runner
     profiles: ["api"]
+ 
+
+  api-redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    restart: always
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
+    env_file:
+          - ./src/api/.prod.env
+    profiles: ["infr"]
+    
 
   fsm-stenographer:
     build: ./src/fsm_stenographer/    
@@ -20,11 +33,12 @@ services:
     env_file:
        ./src/fsm_stenographer/.prod.env
     depends_on:
-      - postgres
       - kafka
+      - fsm-st-postgres
     profiles: ["fsm-st"]
 
-  postgres:
+
+  fsm-st-postgres:
     image: postgres:latest
     ports:
       - "5432:5432" 
@@ -35,12 +49,39 @@ services:
       - PGDATABASE=crud_db
     profiles: ["infr"]
 
-  redis:
+
+  runner:
+    build: ./src/runner/ 
+    image: mmmhdp/farseer_runner:v0
+    ports:
+      - "6666:6666" 
+    env_file:
+       ./src/runner/.prod.env
+    depends_on:
+      - kafka
+      - runner-redis
+      - img-minio 
+    profiles: ["runner"]
+  
+  runner-redis:
     image: redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
+    restart: always
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
+    env_file:
+          - ./src/runner/.prod.env
     profiles: ["infr"]
-    
+  
+  img-minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+    restart: always
+    command: server /data --console-address ":9001"
+    env_file:
+          - ./src/runner/.prod.env
+    profiles: ["infr", "minio"]
   
   zookeeper:
     image: confluentinc/cp-zookeeper
@@ -51,6 +92,7 @@ services:
       - 22181:2181
     profiles: ["infr"]
   
+
   kafka:
     image: confluentinc/cp-kafka
     depends_on:
