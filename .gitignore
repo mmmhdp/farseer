@@ -2,4 +2,5 @@
 *.env
 *.txt
 *.pt
+*.ipynb_chekpoints
 __pycache__
