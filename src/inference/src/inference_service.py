@@ -72,12 +72,15 @@ class InferenceService():
             return
 
         results = model.predict(source=frame, save=False, verbose=False)
-        predicted_classes = []
-        for res in results:
-            serialized_res = json.loads(res.tojson())
-            for det in serialized_res:
-                class_name = det["name"]
-                predicted_classes.append(class_name)
+
+        predicted_classes = [""]
+
+        if results is not None:
+            for res in results:
+                serialized_res = json.loads(res.tojson())
+                for det in serialized_res:
+                    class_name = det["name"]
+                    predicted_classes.append(class_name)
 
         self.__save_pred(event, predicted_classes)
 

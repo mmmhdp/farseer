@@ -1,6 +1,5 @@
-from runner_service import runner_service
 from logger import log
-profiles: ["infr", "minio"]
+from runner_service import runner_service
 
 
 RESTARTN = 10
@@ -17,13 +16,13 @@ def main():
                 f"runner server is out of restart trials"
             )
             break
-        # try:
-        runner_service.read_and_process_event()
-        # except Exception as ex:
-        #    log.warning(
-        #        f"runner server is stopped because of exception: {ex}"
-        #    )
-        #    reset -= 1
+        try:
+            runner_service.read_and_process_event()
+        except Exception as ex:
+            log.warning(
+                f"runner server is stopped because of exception: {ex}"
+            )
+            reset -= 1
 
 
 if __name__ == "__main__":

@@ -16,13 +16,13 @@ def main():
                 f"inference server is out of restart trials"
             )
             break
-        # try:
-        inference_service.read_and_process_event()
-        # except Exception as ex:
-        #    log.warning(
-        #        f"inference server is stopped because of exception: {ex}"
-        #    )
-        #    reset -= 1
+        try:
+            inference_service.read_and_process_event()
+        except Exception as ex:
+            log.warning(
+                f"inference server is stopped because of exception: {ex}"
+            )
+            reset -= 1
 
 
 if __name__ == "__main__":

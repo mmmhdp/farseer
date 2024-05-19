@@ -102,7 +102,7 @@ class RunnerService():
                     self.__publish_event_for_inference(event, frame_id)
 
                     frames = 0
-                    break
+#                    break
 
             vid.release()
 

@@ -10,8 +10,8 @@ services:
       - kafka
       - api-redis
       - fsm-stenographer
-      #- runner
-    profiles: ["api"]
+      - runner
+    profiles: ["api","all"]
  
 
   api-redis:
@@ -22,7 +22,7 @@ services:
     command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
     env_file:
           - ./src/api/.prod.env
-    profiles: ["infr"]
+    profiles: ["infr","all"]
     
 
   fsm-stenographer:
@@ -35,7 +35,7 @@ services:
     depends_on:
       - kafka
       - fsm-st-postgres
-    profiles: ["fsm-st"]
+    profiles: ["fsm-st","all"]
 
 
   fsm-st-postgres:
@@ -47,7 +47,7 @@ services:
       - POSTGRES_USER=nikita
       - POSTGRES_DB=crud_db 
       - PGDATABASE=crud_db
-    profiles: ["infr"]
+    profiles: ["infr","all"]
 
 
   runner:
@@ -61,7 +61,7 @@ services:
       - kafka
       - runner-redis
       - img-minio 
-    profiles: ["runner"]
+    profiles: ["runner","all"]
   
   runner-redis:
     image: redis
@@ -71,9 +71,9 @@ services:
     command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
     env_file:
           - ./src/runner/.prod.env
-    profiles: ["infr"]
+    profiles: ["infr","all"]
   
-  infrerence:
+  inference:
     build: ./src/inference/ 
     image: mmmhdp/farseer_inference:v0
     ports:
@@ -84,7 +84,7 @@ services:
       - kafka
       - inference-redis
       - img-minio 
-    profiles: ["inference"]
+    profiles: ["inference","all"]
   
   inference-redis:
     image: redis
@@ -94,7 +94,7 @@ services:
     command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
     env_file:
           - ./src/inference/.prod.env
-    profiles: ["infr"]
+    profiles: ["infr","all"]
   
   img-minio:
     image: minio/minio
@@ -104,7 +104,20 @@ services:
     command: server /data --console-address ":9001"
     env_file:
           - ./src/runner/.prod.env
-    profiles: ["infr", "minio"]
+    profiles: ["infr", "minio", "all"]
+  
+  api-message-relay:
+    build: ./src/api_fsm_st_msg_relay_srvs/ 
+    image: mmmhdp/farseer_api_fsm_st_msg_relay_srvs:v0
+    ports:
+      - "8888:8888" 
+    env_file:
+       ./src/api_fsm_st_msg_relay_srvs/.prod.env
+    depends_on:
+      - api-redis
+      - fsm-st-postgres
+      - inference-redis
+    profiles: ["outbox", "all"]
   
   zookeeper:
     image: confluentinc/cp-zookeeper
@@ -113,7 +126,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - 22181:2181
-    profiles: ["infr"]
+    profiles: ["infr","all"]
   
 
   kafka:
@@ -129,4 +142,4 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    profiles: ["infr"]
+    profiles: ["infr","all"]
