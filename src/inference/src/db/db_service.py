@@ -83,7 +83,7 @@ class ProcessCacheDatabase():
                 self.conn.delete(*keys)
 
 
-IMAGE_BUCKET_NAME = "frames-for-inference"
+IMAGE_BUCKET_NAME = "image_bucket"
 
 
 class ImgS3Database():
@@ -100,11 +100,14 @@ class ImgS3Database():
             secure=False
         )
         self.IMAGE_BUCKET_path = pathlib.Path(IMAGE_BUCKET_NAME)
-        self.__init_bucket()
 
     def __init_bucket(self):
-        if not self.client.bucket_exists(IMAGE_BUCKET_NAME):
-            self.client.make_bucket(IMAGE_BUCKET_NAME)
+        try:
+            is_exists = self.client.bucket_exists(IMAGE_BUCKET_NAME)
+            if not is_exists:
+                self.client.make_bucket(IMAGE_BUCKET_NAME)
+        except (S3Error, ValueError) as er:
+            log.exception(f"tries to init bucket, but get ex: {er})")
 
     def _get_endpoint(self):
         url = f"{self.host}:{self.port}/"
@@ -138,7 +141,6 @@ class ImgS3Database():
             bucket_name=bucket_name,
             object_name=frm_obj_name,
             data=frm_buff,
-            length=len(b_frame),
             content_type=content_type)
 
         if result:
@@ -168,17 +170,12 @@ class ImgS3Database():
         return frame
 
     def clear_after_event(self, event: Event):
-        log.info(f"start image db cleaning for event {event.request_uuid}")
         b_name = IMAGE_BUCKET_NAME
-        prefix = b_name + "/" + event.request_uuid
+        prefix = event.request_uuid
 
         for obj in self.client.list_objects(
                 bucket_name=b_name,
                 prefix=prefix,
                 recursive=True):
-
-            log.info(f"delete object : {obj.object_name}")
-
             self.client.remove_object(obj.bucket_name, obj.object_name)
-
         log.info(f"db is cleared after event {event.request_uuid}")

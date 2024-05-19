@@ -174,19 +174,17 @@ class RunnerService():
 
         if not is_exists:
             log.critical(
-                f"""can't find pid for event: {event.request_uuid},
-                may be ended before. still will try to clear image db""")
+                f"can't find pid for event: {event.request_uuid}")
+            return
 
         log.debug(
             f"before main actions of deletion for event: {event.request_uuid}")
 
         self.__publish_event_for_fsm_stenographer_about_in_shutdown_processing(
             event)
-
         self.__kill_stream_processes(event)
         self.__clear_cache_db(event)
         self.__clear_image_storage(event)
-
         self.__publish_event_for_fsm_stenographer_about_is_inactive(
             event)
 
