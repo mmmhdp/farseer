@@ -22,7 +22,7 @@ services:
     command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
     env_file:
           - ./src/api/.prod.env
-    profiles: ["infr","all"]
+    profiles: ["infr","all","api-db"]
     
 
   fsm-stenographer:
@@ -33,8 +33,11 @@ services:
     env_file:
        ./src/fsm_stenographer/.prod.env
     depends_on:
-      - kafka
-      - fsm-st-postgres
+      fsm-st-postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
     profiles: ["fsm-st","all"]
 
 
@@ -47,7 +50,12 @@ services:
       - POSTGRES_USER=nikita
       - POSTGRES_DB=crud_db 
       - PGDATABASE=crud_db
-    profiles: ["infr","all"]
+    profiles: ["infr","all","fsm-post"]
+    healthcheck:
+      test:  ["CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
 
 
   runner:
