@@ -20,7 +20,7 @@ class FarseerAPI:
         self.router: APIRouter = APIRouter(prefix=self.prefix)
         self.tags = ["VIDEO_STREAM_ANALITICS"]
         self.router.add_api_route(
-            "/get", self._get_detection_results, methods=["GET"], tags=self.tags)
+            "/get/request", self._get_detection_results, methods=["GET"], tags=self.tags)
         self.router.add_api_route(
             "/post", self._change_request_state, methods=["POST"], tags=self.tags)
 

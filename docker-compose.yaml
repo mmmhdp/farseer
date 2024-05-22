@@ -35,6 +35,7 @@ services:
     depends_on:
       fsm-st-postgres:
         condition: service_healthy
+        #condition: service_started
       kafka:
         condition: service_started
 
@@ -53,8 +54,8 @@ services:
     profiles: ["infr","all","fsm-post"]
     healthcheck:
       test:  ["CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER"]
-      interval: 5s
-      timeout: 2s
+      interval: 1s
+      timeout: 1s
       retries: 10
 
 
@@ -92,7 +93,7 @@ services:
       - kafka
       - inference-redis
       - img-minio 
-    profiles: ["inference","all"]
+    profiles: ["inference"] #,"all"]
   
   inference-redis:
     image: redis

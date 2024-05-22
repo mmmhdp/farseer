@@ -6,7 +6,7 @@ from db.db_service import db
 
 
 class FSMStenographer():
-    _TOPICS = ["api_fsm_st", "runner_fsm_st",]  # "inference_fsm_st"]
+    _TOPICS = ["api_fsm_st", "runner_fsm_st", "inference_fsm_st"]
 
     def __init__(self, topics=_TOPICS):
         self.msg_broker = Broker(topics)

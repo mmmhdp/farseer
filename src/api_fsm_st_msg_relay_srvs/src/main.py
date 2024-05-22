@@ -5,6 +5,7 @@ from outbox_service import outbox_service
 
 RESTARTN = 10
 TIME_DELAY_BETWEEN_UPDATES = 2
+RESTART_DELAY = 2
 
 
 def main():
@@ -26,6 +27,7 @@ def main():
                 f"outbox server is stopped because of exception: {ex}"
             )
             reset -= 1
+            sleep(RESTART_DELAY)
 
 
 if __name__ == "__main__":

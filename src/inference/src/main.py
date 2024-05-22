@@ -1,8 +1,10 @@
 from logger import log
 from inference_service import inference_service
 
+import time
 
 RESTARTN = 10
+RESTART_DELAY = 2
 
 
 def main():
@@ -23,6 +25,7 @@ def main():
                 f"inference server is stopped because of exception: {ex}"
             )
             reset -= 1
+            time.sleep(RESTART_DELAY)
 
 
 if __name__ == "__main__":

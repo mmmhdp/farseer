@@ -2,7 +2,6 @@ import threading
 import json
 
 from ultralytics import YOLO
-import numpy as np
 import numpy.typing as npt
 
 from broker.broker_service import Broker
@@ -38,7 +37,7 @@ class InferenceService():
         match event_type:
             case "predict":
                 self.msg_broker.publish_event(
-                    event=event, topic="runner_fsm_st", state="active")
+                    event=event, topic="inference_fsm_st", state="active")
 
                 event_th = threading.Thread(
                     target=self._predict,
@@ -75,13 +74,11 @@ class InferenceService():
 
         predicted_classes = [""]
 
-        if results is not None:
-            for res in results:
-                serialized_res = json.loads(res.tojson())
-                for det in serialized_res:
-                    class_name = det["name"]
-                    predicted_classes.append(class_name)
-
+        for res in results:
+            for box in res.boxes:
+                idx = int(box.cls.item())
+                class_name = res.names[idx]
+                predicted_classes.append(class_name)
         self.__save_pred(event, predicted_classes)
 
     def __save_pred(self, event: Event, predicted_classes: list["str"]):
