@@ -3,7 +3,7 @@ from inference_service import inference_service
 
 import time
 
-RESTARTN = 10
+RESTARTN = 50
 RESTART_DELAY = 2
 
 

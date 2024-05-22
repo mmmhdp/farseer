@@ -2,7 +2,7 @@ from logger import log
 from fsm_stenographer_service import fsm_stenographer_service
 from time import sleep
 
-RESTARTN = 10
+RESTARTN = 50
 RESTART_DELAY = 2
 
 

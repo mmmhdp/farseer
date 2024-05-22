@@ -2,7 +2,7 @@ from logger import log
 from runner_service import runner_service
 from time import sleep
 
-RESTARTN = 10
+RESTARTN = 50
 RESTART_DELAY = 2
 
 

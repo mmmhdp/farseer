@@ -7,10 +7,14 @@ services:
     env_file:
        ./src/api/.prod.env
     depends_on:
-      - kafka
-      - api-redis
-      - fsm-stenographer
-      - runner
+      kafka:
+        condition: service_healthy
+      api-redis:
+        condition: service_started
+      fsm-stenographer:
+        condition: service_started
+      runner:
+        condition: service_started
     profiles: ["api","all"]
  
 
@@ -22,6 +26,9 @@ services:
     command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
     env_file:
           - ./src/api/.prod.env
+    depends_on:
+      kafka:
+        condition: service_healthy
     profiles: ["infr","all","api-db"]
     
 
@@ -35,10 +42,8 @@ services:
     depends_on:
       fsm-st-postgres:
         condition: service_healthy
-        #condition: service_started
       kafka:
-        condition: service_started
-
+        condition: service_healthy
     profiles: ["fsm-st","all"]
 
 
@@ -51,12 +56,15 @@ services:
       - POSTGRES_USER=nikita
       - POSTGRES_DB=crud_db 
       - PGDATABASE=crud_db
-    profiles: ["infr","all","fsm-post"]
+    depends_on:
+      kafka:
+        condition: service_healthy
     healthcheck:
       test:  ["CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER"]
       interval: 1s
       timeout: 1s
       retries: 10
+    profiles: ["infr","all","fsm-post"]
 
 
   runner:
@@ -67,9 +75,12 @@ services:
     env_file:
        ./src/runner/.prod.env
     depends_on:
-      - kafka
-      - runner-redis
-      - img-minio 
+      kafka:
+        condition: service_healthy
+      runner-redis:
+        condition: service_started
+      img-minio:
+        condition: service_started
     profiles: ["runner","all"]
   
   runner-redis:
@@ -80,6 +91,9 @@ services:
     command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
     env_file:
           - ./src/runner/.prod.env
+    depends_on:
+      kafka:
+        condition: service_healthy
     profiles: ["infr","all"]
   
   inference:
@@ -90,10 +104,13 @@ services:
     env_file:
        ./src/inference/.prod.env
     depends_on:
-      - kafka
-      - inference-redis
-      - img-minio 
-    profiles: ["inference"] #,"all"]
+      kafka:
+        condition: service_healthy
+      inference-redis:
+        condition: service_started
+      img-minio:
+        condition: service_started
+    profiles: ["inference","all"]
   
   inference-redis:
     image: redis
@@ -103,6 +120,9 @@ services:
     command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
     env_file:
           - ./src/inference/.prod.env
+    depends_on:
+      kafka:
+        condition: service_healthy
     profiles: ["infr","all"]
   
   img-minio:
@@ -113,6 +133,9 @@ services:
     command: server /data --console-address ":9001"
     env_file:
           - ./src/runner/.prod.env
+    depends_on:
+      kafka:
+        condition: service_healthy
     profiles: ["infr", "minio", "all"]
   
   api-message-relay:
@@ -122,21 +145,16 @@ services:
       - "8888:8888" 
     env_file:
        ./src/api_fsm_st_msg_relay_srvs/.prod.env
-    depends_on:
-      - api-redis
-      - fsm-st-postgres
-      - inference-redis
+    depends_on: 
+      kafka:
+        condition: service_healthy
+      api-redis:
+        condition: service_started
+      fsm-st-postgres:
+        condition: service_started
+      inference-redis:
+        condition: service_started
     profiles: ["outbox", "all"]
-  
-  zookeeper:
-    image: confluentinc/cp-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - 22181:2181
-    profiles: ["infr","all"]
-  
 
   kafka:
     image: confluentinc/cp-kafka
@@ -151,4 +169,19 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+        test: nc -z localhost 9092 || exit -1
+        start_period: 15s
+        interval: 1s
+        timeout: 1s
+        retries: 10
+    profiles: ["infr","all"]
+  
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
     profiles: ["infr","all"]

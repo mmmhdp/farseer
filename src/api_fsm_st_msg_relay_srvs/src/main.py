@@ -3,7 +3,7 @@ from time import sleep
 from outbox_service import outbox_service
 
 
-RESTARTN = 10
+RESTARTN = 50
 TIME_DELAY_BETWEEN_UPDATES = 2
 RESTART_DELAY = 2
 

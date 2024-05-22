@@ -79,6 +79,7 @@ class InferenceService():
                 idx = int(box.cls.item())
                 class_name = res.names[idx]
                 predicted_classes.append(class_name)
+
         self.__save_pred(event, predicted_classes)
 
     def __save_pred(self, event: Event, predicted_classes: list["str"]):
