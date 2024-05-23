@@ -81,7 +81,7 @@ services:
         condition: service_started
       img-minio:
         condition: service_started
-    profiles: ["runner","all"]
+    profiles: ["runner"] #,"all"]
   
   runner-redis:
     image: redis
