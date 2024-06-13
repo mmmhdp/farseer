@@ -1,3 +1,10 @@
+clone project
+
+```console
+$ git clone https://github.com/mmmhdp/farseer.git
+$ cd farseer
+```
+
 start up service with one command from source dir with docker-compose file
 
 ```console
