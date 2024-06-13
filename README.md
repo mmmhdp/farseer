@@ -12,3 +12,5 @@ $ docker compose --profile all up --build --force-recreate --remove-orphans
 ```
 
 docs and api description is acessible via http://localhost:8000/docs# 
+
+good source for test rtsp stream https://rtsp.stream
