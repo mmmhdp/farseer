@@ -11,6 +11,6 @@ start up service with one command from source dir with docker-compose file
 $ docker compose --profile all up --build --force-recreate --remove-orphans
 ```
 
-docs and api description is acessible via http://localhost:8000/docs# 
+docs and an api description is accessible via http://localhost:8000/docs# after set up 
 
-good source for test rtsp stream https://rtsp.stream
+a good source for the testing purposes of the rtsp stream is able via a link https://rtsp.stream
